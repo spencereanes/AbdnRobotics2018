@@ -1,0 +1,7 @@
+*.pyc
+/src/hello/
+/devel/
+/build/
+*.pdf
+*.gv
+*~

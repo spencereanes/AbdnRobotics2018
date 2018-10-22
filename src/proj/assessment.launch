@@ -1,0 +1,16 @@
+<launch>
+  <param name="/use_sim_time" value="true"/>
+  <rosparam param="robot_start">[-4.8,-3.6,0]</rosparam>
+  <rosparam param="goal0">[-2,-2]</rosparam> <!-- easy -->
+  <rosparam param="goal1">[2.5,-4.15]</rosparam> <!-- a bit harder -->
+  <rosparam param="goal2">[-2.55,3.13]</rosparam> <!-- same as above -->
+  <rosparam param="goal3">[4.5,-3.5]</rosparam>  <!-- much harder -->
+  <rosparam param="goal4">[5.15,2]</rosparam> <!-- very hard -->
+  <node name="map_server" pkg="map_server" type="map_server" args="/home/viki/catkin_ws/src/proj/world/map.yaml" />
+  <node name="stage" pkg="stage_ros" type="stageros" args="/home/viki/catkin_ws/src/proj/world/map.world" />
+  <node name="fake_localization" pkg="fake_localization" type="fake_localization"/>
+  <node name="dummy_localization" pkg="dummy_localization" type="dummy_localization.py"/> 
+  <node name="path" pkg="proj" type="path.py"/>
+<!--  <node name="add_gaussian_noise" pkg="add_gaussian_noise" type="addGaussianNoise.py"/>  -->
+  <node name="real_robot_pose" pkg="proj" type="real_robot_pose.py" />  
+</launch>
