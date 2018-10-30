@@ -17,9 +17,8 @@ from geometry_msgs.msg import PointStamped
 
 """
 To Do:
+pre-compute filled squares for time speed up
 order dict with tuples rather than hashing myself
-draw this path to rviz
-PID controller
 figure out how to modify astar for jfs
 """
 class path:
@@ -32,18 +31,20 @@ class path:
 
     self.goals=[]
     self.get_goals()
-
-
+    print self.map.info
+    #tweaked map size and something is wrong now
     self.data=self.map.data
     self.width=self.map.info.width #1000
     self.height=self.map.info.height #800
     self.marr=np.array(self.data).reshape(self.height,self.width)
     #print self.marr[100,100]
     self.res=self.map.info.resolution
+    #inflated_data=self.obstacle_inflation1()
+    #np.savetxt("inflated_data",inflated_data,delimiter=",")
+    print "done"
+    #self.p=self.efficient_path([-4.8,-3.6],True)
 
-    self.p=self.efficient_path([-4.8,-3.6],True)
-
-    self.draw_path()
+    #self.draw_path()
     
 
   def draw_path(self):
@@ -228,11 +229,11 @@ class path:
   #this function is for convenience - change one line here 
   #to alter which hueristic we use in all future functions.
   def heur(self,p1,p2):
-    return self.manhattan(p1[0],p1[1],p2[0],p2[1])
-  """
+    return self.euclidean(p1[0],p1[1],p2[0],p2[1])
+
   #this implementation is slow as fuck
   def obstacle_inflation(self,dist=10):
-    copy=self.marr
+    copy=self.marr.copy()
     for x in range(self.width):
       print x
       for y in range(self.height):
@@ -242,16 +243,16 @@ class path:
               copy[x1,y1]=100
 
   #this one is slightly faster but still not feasible
-  def obstacle_inflation1(self,dist=10):
-    copy=self.marr
-    for x in range(self.width):
+  def obstacle_inflation1(self,dist=4):
+    copy=self.marr.copy()
+    for x in range(self.height-1):
       print x
-      for y in range(self.height):
+      for y in range(self.width-1):
         if self.marr[x,y]==100:
-          pass
+          continue
         if sum(self.marr[min(0,x-dist):min(self.width,x+dist), min(0,y-dist):min(self.width,y+dist)].sum(axis=0)) >=100:
           copy[x,y]=100
-  """
+
 
 
 do=path()

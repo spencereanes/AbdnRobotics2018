@@ -6,11 +6,64 @@
   <rosparam param="goal2">[-2.55,3.13]</rosparam> <!-- same as above -->
   <rosparam param="goal3">[4.5,-3.5]</rosparam>  <!-- much harder -->
   <rosparam param="goal4">[5.15,2]</rosparam> <!-- very hard -->
+
   <node name="map_server" pkg="map_server" type="map_server" args="/home/viki/catkin_ws/src/proj/world/map.yaml" />
   <node name="stage" pkg="stage_ros" type="stageros" args="/home/viki/catkin_ws/src/proj/world/map.world" />
   <node name="fake_localization" pkg="fake_localization" type="fake_localization"/>
   <node name="dummy_localization" pkg="dummy_localization" type="dummy_localization.py"/> 
   <node name="path" pkg="proj" type="path.py"/>
-<!--  <node name="add_gaussian_noise" pkg="add_gaussian_noise" type="addGaussianNoise.py"/>  -->
+  <node name="add_gaussian_noise" pkg="add_gaussian_noise" type="addGaussianNoise.py"/>  
   <node name="real_robot_pose" pkg="proj" type="real_robot_pose.py" />  
+
+  <node pkg="amcl" type="amcl" name="amcl" output="screen">  
+    <param name="odom_model_type" value="diff-corrected"/>
+    <param name="transform_tolerance" value="0.2" />
+    <param name="gui_publish_rate" value="10.0"/>
+
+    <param name="laser_max_beams" value="30"/>
+    <param name="laser_max_range" value="3.0"/>
+    <param name="min_particles" value="100"/>
+    <param name="max_particles" value="1000"/>
+
+    <param name="kld_err" value="0.02"/>
+    <param name="kld_z" value="0.99"/>
+
+    <param name="odom_alpha1" value="0.005"/>
+    <param name="odom_alpha2" value="0.005"/>
+    <param name="odom_alpha3" value="0.010"/>
+    <param name="odom_alpha4" value="0.005"/>
+
+    <param name="laser_z_hit" value="0.9"/>
+    <param name="laser_z_short" value="0.05"/>
+    <param name="laser_z_max" value="0.025"/>
+    <param name="laser_z_rand" value="0.025"/>
+
+    <param name="laser_sigma_hit" value="0.2"/>
+    <param name="laser_lambda_short" value="0.1"/>
+    <param name="laser_model_type" value="beam"/>
+    <param name="laser_likelihood_max_dist" value="0.2"/>
+
+    <param name="odom_frame_id" value="odom"/>
+    <param name="base_frame_id" value="base_link"/>
+    <param name="global_frame_id" value="map"/>
+
+    <param name="resample_interval" value="3"/>
+    <param name="transform_tolerance" value="0.1"/>
+
+    <param name="recovery_alpha_slow" value="0.001"/>
+    <param name="recovery_alpha_fast" value="0.1"/>
+
+    <param name="initial_pose_x" value="-4.8"/>
+    <param name="initial_pose_y" value="-3.6"/>
+    <param name="initial_pose_a" value="0.0"/>
+
+    <param name="initial_cov_xx" value="0.5"/>
+    <param name="initial_cov_yy" value="0.5"/>
+
+    <param name="use_map_topic" value="true"/>
+    <param name="first_map_only" value="true"/>
+
+    <remap from="scan" to="add_gaussian_noise" />
+  </node>
+
 </launch>
