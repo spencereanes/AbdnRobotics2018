@@ -34,9 +34,11 @@ class real_robot_pose:
     
     while not rospy.is_shutdown():
       self.broadcast()
-      self.real_pos_marker()
-      #print self.position.position
+      self.real_pose_marker()
+      self.amcl_pose_marker()
+      self.m.draw()
       self.r.sleep()
+      #self.m.clear()
 
   def handle_real_pose(self, data):
     self.real_pose=data
@@ -57,10 +59,12 @@ class real_robot_pose:
       rospy.sleep(.5)
       self.first=False
 
-  def real_pos_marker(self):
-    p=self.position.position
-    self.m.add(p.x+6,p.y+4.8,1,0,0,'real_robot_pose')
-    self.m.draw()
-    self.r.sleep()
+  def real_pose_marker(self):
+    p=self.real_pose.pose.pose.position
+    self.m.add(p.x,p.y,1,0,0,'map')
+
+  def amcl_pose_marker(self):
+    p=self.amcl_pose.pose.pose.position
+    self.m.add(p.x,p.y,0,0,1,'map')
 
 bot=real_robot_pose()
