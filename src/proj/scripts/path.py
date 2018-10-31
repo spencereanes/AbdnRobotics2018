@@ -21,30 +21,32 @@ pre-compute filled squares for time speed up
 order dict with tuples rather than hashing myself
 figure out how to modify astar for jfs
 """
+
 class path:
   def __init__(self):
-    rospy.init_node('map_data')
+    print 'here'
+    rospy.init_node('astar_path')
     self.r=rospy.Rate(10)
-    #self.m=marker.Markers()
-    self.map=rospy.wait_for_message('/map',OccupancyGrid,timeout=None)
-    rospy.loginfo('\nMap information collected')
+    self.m=marker.Markers()
+    print 'here'
+    self.arr=np.empty([2,2])
+    print 'here'
+    #try:
+    self.arr=np.genfromtxt('inflated_data.csv',delimiter=',')
+    #except:
+      #print "No precomputed occupancygrid, recomputing"
+    
+    #self.res=self.arr[2]
+    self.res=0.012
+    self.marr=np.array(self.arr[2:]).reshape(self.arr[0],self.arr[1])
 
     self.goals=[]
     self.get_goals()
-    print self.map.info
-    #tweaked map size and something is wrong now
-    self.data=self.map.data
-    self.width=self.map.info.width #1000
-    self.height=self.map.info.height #800
-    self.marr=np.array(self.data).reshape(self.height,self.width)
-    #print self.marr[100,100]
-    self.res=self.map.info.resolution
-    #inflated_data=self.obstacle_inflation1()
-    #np.savetxt("inflated_data",inflated_data,delimiter=",")
-    print "done"
-    #self.p=self.efficient_path([-4.8,-3.6],True)
 
-    #self.draw_path()
+
+    self.p=self.efficient_path([-4.8,-3.6],True)
+
+    self.draw_path()
     
 
   def draw_path(self):
@@ -175,20 +177,19 @@ class path:
   def children(self,index):
     return [ [index[0]+1,index[1]], [index[0]-1,index[1]], [index[0],index[1]+1], [index[0],index[1]-1], [index[0]+1,index[1]+1], [index[0]-1,index[1]-1], [index[0]+1,index[1]-1], [index[0]-1,index[1]+1]  ]
   
+  
+  #deprecated by use of precomputed obstacle inflation
   def is_passable(self,index,dist=1):
-    for x in range(index[0]-dist,index[0]+dist):
-      #print x
-      for y in range(index[1]-dist,index[1]+dist):
-        #print "in is_passable"
-        try:
-          #print [x,y]
-          if self.marr[x,y] == 100:
-            #print "inside"
-            return False
-        except:
-          return False
+    try:
+      #print [x,y]
+      if self.marr[x,y] == 100:
+        #print "inside"
+        return False
+    except:
+      return False
     return True
-
+  
+    #what is this
     """
     for x in range(index[0]-dist,index[0]+dist):
       for y in range(index[1]-dist,index[1]+dist):
@@ -230,28 +231,6 @@ class path:
   #to alter which hueristic we use in all future functions.
   def heur(self,p1,p2):
     return self.euclidean(p1[0],p1[1],p2[0],p2[1])
-
-  #this implementation is slow as fuck
-  def obstacle_inflation(self,dist=10):
-    copy=self.marr.copy()
-    for x in range(self.width):
-      print x
-      for y in range(self.height):
-        if self.marr[x][y] == 100:
-          for x1 in range(min(0,x-dist),min(self.width,x+dist)):
-            for y1 in range(min(0,y-dist),min(self.width,y+dist)):
-              copy[x1,y1]=100
-
-  #this one is slightly faster but still not feasible
-  def obstacle_inflation1(self,dist=4):
-    copy=self.marr.copy()
-    for x in range(self.height-1):
-      print x
-      for y in range(self.width-1):
-        if self.marr[x,y]==100:
-          continue
-        if sum(self.marr[min(0,x-dist):min(self.width,x+dist), min(0,y-dist):min(self.width,y+dist)].sum(axis=0)) >=100:
-          copy[x,y]=100
 
 
 
