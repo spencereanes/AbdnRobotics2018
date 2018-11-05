@@ -7,7 +7,7 @@ class Markers:
   def __init__(self,domain="/scanMarkers"):
     self.i=0
     self.markers=[]
-    self.pub=rospy.Publisher(domain,MarkerArray,queue_size=200)
+    self.pub=rospy.Publisher(domain,MarkerArray,queue_size=500)
     self.flag=False
 
   def add(self,x,y,r,g,b,frame):

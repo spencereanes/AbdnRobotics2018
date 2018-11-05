@@ -19,37 +19,38 @@ class obstacle_inflation:
     self.data=self.map.data
     self.width=self.map.info.width
     self.height=self.map.info.height
-    self.marr=np.array(self.data).reshape(self.height,self.width)
     self.res=self.map.info.resolution
     print 'here'
 
-    inflated_data=(self.obstacle_inflation1()).astype(int)
-    inflated_data=np.insert(inflated_data,0,[self.height,self.width,self.res])
-    np.savetxt("inflated_data.csv",inflated_data,delimiter=",")
+    inflated_data=(self.obstacle_inflation())
+    inflated_data=np.insert(inflated_data,0,[self.width,self.height,self.res])
+    np.savetxt("inflated_data.csv",inflated_data,fmt='%.3f',delimiter=",")
     rospy.loginfo("done")
 
   #this implementation is very slow
-  def obstacle_inflation(self,dist=10):
-    copy=self.marr.copy()
+  def obstacle_inflation(self,dist=1):
+    copy=list(self.data)
     for x in range(self.width):
-      #print x
+      print x
       for y in range(self.height):
-        if self.marr[x][y] == 100:
-          for x1 in range(min(0,x-dist),min(self.width,x+dist)):
-            for y1 in range(min(0,y-dist),min(self.width,y+dist)):
-              copy[x1,y1]=100
-
+        #print x*1000+y
+        if self.data[x*800+y] == 100:
+          for x1 in range(max(0,x-dist),min(self.height,x+dist)):
+            for y1 in range(max(0,y-dist),min(self.width,y+dist)):
+              copy[y*1000+x]=100
+              
     return copy
 
   #this one is slightly faster
-  def obstacle_inflation1(self,dist=8):
-    copy=self.marr.copy()
-    for x in range(self.height):
+  def obstacle_inflation1(self,dist=2):
+    copy=list(self.data)
+    for x in range(self.width):
       print x
-      for y in range(self.width):
-        if self.marr[x,y]==100:
+      for y in range(self.height):
+        if self.data[y*1000+i]==100:
           continue
         if sum(self.marr[min(0,x-dist):min(self.width,x+dist), min(0,y-dist):min(self.width,y+dist)].sum(axis=0)) >=100:
+          #print "(x,y): ",x,y
           copy[x,y]=100
 
     return copy

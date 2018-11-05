@@ -63,7 +63,7 @@
     <param name="use_map_topic" value="true"/>
     <param name="first_map_only" value="true"/>
 
-    <remap from="scan" to="add_gaussian_noise" />
+    <remap from="scan" to="noisy_base_scan" />
   </node>
 
 </launch>
