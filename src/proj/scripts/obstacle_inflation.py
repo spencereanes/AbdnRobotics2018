@@ -22,37 +22,21 @@ class obstacle_inflation:
     self.res=self.map.info.resolution
     print 'here'
 
-    inflated_data=(self.obstacle_inflation())
-    inflated_data=np.insert(inflated_data,0,[self.width,self.height,self.res])
-    np.savetxt("inflated_data.csv",inflated_data,fmt='%.3f',delimiter=",")
+    inflated_data=self.obstacle_inflation()
+    np.savetxt("/home/viki/catkin_ws/src/proj/scripts/inflated_data.csv",inflated_data,fmt='%.3f',delimiter=",")
     rospy.loginfo("done")
 
-  #this implementation is very slow
-  def obstacle_inflation(self,dist=1):
+  def obstacle_inflation(self,dist=10):
     copy=list(self.data)
     for x in range(self.width):
       print x
       for y in range(self.height):
-        #print x*1000+y
-        if self.data[x*800+y] == 100:
-          for x1 in range(max(0,x-dist),min(self.height,x+dist)):
-            for y1 in range(max(0,y-dist),min(self.width,y+dist)):
-              copy[y*1000+x]=100
+        if self.data[y*1000+x] == 100:
+          for x1 in range(max(0,x-dist),min(self.width,x+dist)):  
+            for y1 in range(max(0,y-dist),min(self.height,y+dist)):
+              #print "(x1,y1): " , x1, y1
+              copy[y1*1000+x1]=100
               
-    return copy
-
-  #this one is slightly faster
-  def obstacle_inflation1(self,dist=2):
-    copy=list(self.data)
-    for x in range(self.width):
-      print x
-      for y in range(self.height):
-        if self.data[y*1000+i]==100:
-          continue
-        if sum(self.marr[min(0,x-dist):min(self.width,x+dist), min(0,y-dist):min(self.width,y+dist)].sum(axis=0)) >=100:
-          #print "(x,y): ",x,y
-          copy[x,y]=100
-
     return copy
 
 go=obstacle_inflation()

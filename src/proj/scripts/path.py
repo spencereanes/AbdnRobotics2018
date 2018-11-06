@@ -25,16 +25,20 @@ class path:
   def __init__(self):
 
     rospy.init_node('astar_path')
-    self.r=rospy.Rate(1)
+    self.r=rospy.Rate(10)
     self.m=marker.Markers()
 
     self.arr=np.empty([2,2])
-    """
+    self.get_map()
+    self.map_width=self.map.info.width
+    self.map_height=self.map.info.height
+    self.res=self.map.info.resolution
+
     try:
-      self.arr=np.genfromtxt('/home/viki/catkin_ws/src/proj/inflated_data.csv',delimiter=',')
+      self.map.data=np.genfromtxt('/home/viki/catkin_ws/src/proj/scripts/inflated_data.csv',delimiter=',')
     except:
       print "No precomputed occupancygrid"
-    """
+    
     #print self.arr[0:10]
     #self.res=self.arr[2]
     #self.res=0.012
@@ -42,16 +46,9 @@ class path:
     #self.map_height=np.int(self.arr[1])
     #self.marr=np.array(self.arr[3:]).reshape(self.arr[0],self.arr[1])
 
-    self.get_map()
-    self.map_width=self.map.info.width
-    self.map_height=self.map.info.height
-    self.res=self.map.info.resolution
-
     """
     for i in range(0,self.map_width,10):
       for j in range(0,self.map_height,10):
-        #print "(i,j): ", i,j
-        #print self.marr[i,j]
         if self.map.data[self.indexer(i,j)]==100:
           p=self.deconvert([i,j])
           #print p
@@ -69,7 +66,6 @@ class path:
     rospy.loginfo("Goals ordered")
     
     self.p=self.efficient_path([-4.8,-3.6],True)
-    #print self.p[:10]
     self.draw_path()
     
   def indexer(self,i,j):
@@ -126,7 +122,8 @@ class path:
 
     path = []
     start_time = time.time()
-    for i in range(len(seq)-1):
+    i = 0
+    while i < len(seq)-1:
       #reverse index path
       rind_path=self.astar(seq[i],seq[i+1])
       curr=seq[i+1]
@@ -135,18 +132,22 @@ class path:
       on=self.convert_index(curr)
       temp.append(on)
       
-
-      while (rind_path[on]) is not None:
-        #print rind_path[on]
-        temp.append(rind_path[on])
-        on=rind_path[on]
+      try:
+        while (rind_path[on]) is not None:
+          #print rind_path[on]
+          temp.append(rind_path[on])
+          on=rind_path[on]
+      except:
+        seq.pop(i+1)
+        i = i - 1
+        continue #there was not path between those two goals
 
       #don't need to reverse, controller wants it in reverse order
       #temp.reverse()
       temp=map(self.deconvert,temp)
 
       path.append(temp)
-    
+      i = i + 1
     end_time=time.time()
     rospy.loginfo("\nPath Constructed")
     if timing:
@@ -188,7 +189,7 @@ class path:
 
       for child in self.children(parent):
         #print "child: ", child
-        if not self.is_passable(child):
+        if not self.is_passable1(child):
           #print "not passable"
           continue
         
@@ -212,11 +213,11 @@ class path:
     return [int(math.floor(hashed_index/1000)),hashed_index%1000]
 
   def children(self,index):
-    return [ (index[0]+1,index[1]), (index[0]-1,index[1]), (index[0],index[1]+1), (index[0],index[1]-1), (index[0]+1,index[1]+1), (index[0]-1,index[1]-1), (index[0]+1,index[1]-1), (index[0]-1,index[1]+1)  ]
+    return [ (index[0]+1,index[1]), (index[0]-1,index[1]), (index[0],index[1]+1), (index[0],index[1]-1) ]
+#, (index[0]+1,index[1]+1), (index[0]-1,index[1]-1), (index[0]+1,index[1]-1), (index[0]-1,index[1]+1)  ]
   
   
-  
-  def is_passable(self,index,dist=1):
+  def is_passable(self,index,dist=3):
     for x in range(index[0]-dist,index[0]+dist):
       for y in range(index[1]-dist,index[1]+dist):
         try:
@@ -226,18 +227,18 @@ class path:
           return False
     return True
 
-    #what is this
-    """
+  #using precomputed inflated obstacles
+  def is_passable1(self,index):
     try:
       #print [x,y]
-      if self.marr[x,y] == 100:
+      if self.map.data[self.indexer(index[0],index[1])] == 100:
         #print "inside"
         return False
     except:
       return False
     #print "returning true"
     return True
-    """
+    
 
   """
   This function will find the sequence of shortest pathes between the goals.
@@ -274,7 +275,7 @@ class path:
   #this function is for convenience - change one line here 
   #to alter which hueristic we use in all future functions.
   def heur(self,p1,p2):
-    return self.diagonal(p1[0],p1[1],p2[0],p2[1])
+    return self.manhattan(p1[0],p1[1],p2[0],p2[1])
 
 
 
