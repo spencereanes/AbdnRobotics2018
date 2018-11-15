@@ -66,7 +66,11 @@ class path:
     rospy.loginfo("Goals ordered")
     
     self.p=self.efficient_path([-4.8,-3.6],True)
-    self.draw_path()
+    self.p = [item for sublist in self.p for item in sublist]
+    #self.draw_path()
+    
+  def get_path(self):
+    return self.p
     
   def indexer(self,i,j):
     return j*1000+i
@@ -123,7 +127,7 @@ class path:
     path = []
     start_time = time.time()
     i = 0
-    while i < len(seq)-1:
+    while i < 1:
       #reverse index path
       rind_path=self.astar(seq[i],seq[i+1])
       curr=seq[i+1]
@@ -148,6 +152,7 @@ class path:
 
       path.append(temp)
       i = i + 1
+
     end_time=time.time()
     rospy.loginfo("\nPath Constructed")
     if timing:
@@ -193,7 +198,7 @@ class path:
           #print "not passable"
           continue
         
-        cost1=cost_so_far[parent]+self.heur(parent,child)
+        cost1=cost_so_far[parent]+1.001*self.heur(parent,child)
         if child not in cost_so_far or cost1 < cost_so_far[child]:
           #print "in if"
           cost_so_far[child]=cost1
@@ -277,9 +282,6 @@ class path:
   def heur(self,p1,p2):
     return self.manhattan(p1[0],p1[1],p2[0],p2[1])
 
-
-
-do=path()
 
 
 
