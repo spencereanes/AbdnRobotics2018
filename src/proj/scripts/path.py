@@ -198,7 +198,7 @@ class path:
           #print "not passable"
           continue
         
-        cost1=cost_so_far[parent]+1.001*self.heur(parent,child)
+        cost1=cost_so_far[parent]+self.heur(parent,child)
         if child not in cost_so_far or cost1 < cost_so_far[child]:
           #print "in if"
           cost_so_far[child]=cost1
@@ -218,8 +218,7 @@ class path:
     return [int(math.floor(hashed_index/1000)),hashed_index%1000]
 
   def children(self,index):
-    return [ (index[0]+1,index[1]), (index[0]-1,index[1]), (index[0],index[1]+1), (index[0],index[1]-1) ]
-#, (index[0]+1,index[1]+1), (index[0]-1,index[1]-1), (index[0]+1,index[1]-1), (index[0]-1,index[1]+1)  ]
+    return [ (index[0]+1,index[1]), (index[0]-1,index[1]), (index[0],index[1]+1), (index[0],index[1]-1), (index[0]+1,index[1]+1), (index[0]-1,index[1]-1), (index[0]+1,index[1]-1), (index[0]-1,index[1]+1)  ]
   
   
   def is_passable(self,index,dist=3):

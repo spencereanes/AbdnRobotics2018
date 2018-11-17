@@ -76,7 +76,7 @@ floorplan
 )
 
 # throw in a robot
-rob( pose [ -4.8 -3.6 0 0.000 ] name "robby" color "blue")
+rob( pose [ -4.8 -3.6 0 0.000 ] name "jorge" color "blue")
 
 # add in a shape for scanning
 define block1 model
