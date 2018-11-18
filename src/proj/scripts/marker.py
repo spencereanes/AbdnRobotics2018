@@ -35,7 +35,6 @@ class Markers:
     for m in self.markers:
       markerArray.markers.append(m)
     self.pub.publish(markerArray)
-    #self.i=0
 
   def clear(self):
     markerArray=MarkerArray()

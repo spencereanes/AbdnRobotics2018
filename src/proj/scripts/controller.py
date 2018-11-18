@@ -16,12 +16,13 @@ from geometry_msgs.msg import PointStamped
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
 class controller:
-  def __init__(self,path,tolerance_x=.5,tolerance_t=1):
+  def __init__(self,path,verbose=True,tolerance_x=.24,tolerance_t=1):
     self.dt=.05
     self.r=rospy.Rate(1/self.dt)
     self.path=path
     self.p=list(self.path)
-
+    self.m=marker.Markers('/path')
+    self.verbose=verbose
     rospy.wait_for_message("/amcl_pose", PoseWithCovarianceStamped)
     #amcl is ready
     rospy.wait_for_message("/odom",Odometry)
@@ -46,23 +47,27 @@ class controller:
 
   def follow_path(self):
     ctr=0
+    self.draw_path()
     while len(self.path) > 0 and not rospy.is_shutdown():
       ctr+=1
-      print(ctr)
+      if self.verbose:
+        print(ctr)
       for i in range(10):
         curr_goal = self.path.pop()
       goal_theta = self.update_goal_theta(curr_goal)
-      #self.draw_path()
-      #self.m.draw()
+      
+      self.m.draw()
+      self.r.sleep()
       self.driver(curr_goal,goal_theta)
-
-  #def pid_control(self,dt,
 
   def update_goal_theta(self,curr_goal):
     return math.atan2(curr_goal[1]-self.position.y,curr_goal[0]-self.position.x)
 
-  #currently using only a p controller with a couple tweaks
+  #separate PID control for angular and linear with some extra rules
   def driver(self,goal,goal_theta):
+
+    max_linear=rospy.get_param('max_linear')
+    max_angular=rospy.get_param('max_angular')
 
     #define control parameters
     kpt=1
@@ -82,14 +87,16 @@ class controller:
     error_t = goal_theta - self.orientation
     #error in position
     error_x = self.dist(p,goal)
-    print "error_x: ", error_x
-    print "error_t: ", error_t
-    print
+    if self.verbose:
+      print
+      print "Path: ",self.path[-2:-1]
+      print "Position: ", [self.position.x,self.position.y]
 
     while ((error_x>self.tolerance_x) or (abs(error_t) > self.tolerance_t)):
-      print "error_x: ", error_x
-      print "error_t: ", error_t
-      print
+      if self.verbose:
+        print "error_x: ", error_x
+        print "error_t: ", error_t
+        print
 
       p=[self.position.x,self.position.y]
       #update errors and position
@@ -109,21 +116,17 @@ class controller:
       
       if abs(error_t) > math.pi/3:
         self.movement.linear.x = 0
-      self.movement.linear.x=min(.5,self.movement.linear.x)
+      self.movement.linear.x=min(max_linear,self.movement.linear.x)
       if self.movement.angular.z > 0:
-        self.movement.angular.z=min(math.pi/4,self.movement.angular.z)
+        self.movement.angular.z=min(max_angular,self.movement.angular.z)
       else:
-        self.movement.angular.z=max(-math.pi/4,self.movement.angular.z)
+        self.movement.angular.z=max(-1*max_angular,self.movement.angular.z)
       
       self.pub.publish(self.movement)
-      #print self.movement
-      #print
       e0_t=error_t
       e0_x=error_x
-
+      self.m.draw()
       goal_theta=self.update_goal_theta(goal)
-      #potential issue: if not enough movement, amcl won't publish update
-      #meaning the two errors would match
       self.r.sleep()
 
     #goal is reached, stop movement, sleep and move on
@@ -131,10 +134,6 @@ class controller:
     self.movement.angular.z=0
     self.pub.publish(self.movement)
     self.r.sleep()
-
-    print
-    print "Path: ",self.path[-2:-1]
-    print "Position: ", [self.position.x,self.position.y]
 
     return
 
@@ -146,9 +145,9 @@ class controller:
     return math.sqrt(abs(p1[0]-p2[0])**2+abs(p1[1]-p2[1]))
 
   def draw_path(self):
-    self.m=marker.Markers("/path")
-    for subpath in self.p:
-      a=range(len(subpath))
-      for i in a[0::10]:
-        self.m.add(subpath[i][0],subpath[i][1],1,0,0,'map')
+    ctr = 0
+    for point in self.p:
+      if ctr % 20 == 0:
+        self.m.add(point[0],point[1],0,.8,0,'map')
+      ctr=ctr+1
 

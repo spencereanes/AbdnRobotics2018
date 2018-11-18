@@ -38,13 +38,6 @@ class path:
       self.map.data=np.genfromtxt('/home/viki/catkin_ws/src/proj/scripts/inflated_data.csv',delimiter=',')
     except:
       print "No precomputed occupancygrid"
-    
-    #print self.arr[0:10]
-    #self.res=self.arr[2]
-    #self.res=0.012
-    #self.map_width=np.int(self.arr[0])
-    #self.map_height=np.int(self.arr[1])
-    #self.marr=np.array(self.arr[3:]).reshape(self.arr[0],self.arr[1])
 
     """
     for i in range(0,self.map_width,10):
@@ -63,9 +56,10 @@ class path:
 
     self.goals=[]
     self.get_goals()
-    rospy.loginfo("Goals ordered")
-    
-    self.p=self.efficient_path([-4.8,-3.6],True)
+    rospy.loginfo("Goals captured")
+    start=rospy.get_param("robot_start")
+    self.p=self.efficient_path(start[0:2],True)
+    #this 'flattens' the list of lists into a single list
     self.p = [item for sublist in self.p for item in sublist]
     #self.draw_path()
     
@@ -83,10 +77,8 @@ class path:
 
   def draw_path(self):
     m=marker.Markers("/path")
-    for subpath in self.p:
-      a=range(len(subpath))
-      for i in a[0::10]:
-        m.add(subpath[i][0],subpath[i][1],1,0,0,'map')
+    for point in self.p:
+      m.add(point[0],point[1],1,0,0,'map')
     while not rospy.is_shutdown():
       m.draw()
       self.r.sleep()
@@ -127,7 +119,7 @@ class path:
     path = []
     start_time = time.time()
     i = 0
-    while i < 1:
+    while i < 2:
       #reverse index path
       rind_path=self.astar(seq[i],seq[i+1])
       curr=seq[i+1]
@@ -138,7 +130,6 @@ class path:
       
       try:
         while (rind_path[on]) is not None:
-          #print rind_path[on]
           temp.append(rind_path[on])
           on=rind_path[on]
       except:
@@ -157,6 +148,7 @@ class path:
     rospy.loginfo("\nPath Constructed")
     if timing:
       print "Time (s): ", end_time-start_time
+    path.reverse()
     return path
 
   """
@@ -193,7 +185,7 @@ class path:
       #print parent
 
       for child in self.children(parent):
-        #print "child: ", child
+        #using is passable1 since we are using precomputed obstacle_infaltion
         if not self.is_passable1(child):
           #print "not passable"
           continue
@@ -211,12 +203,14 @@ class path:
     print "leaving astar"
     return came_from
 
+  #no longer using hashing functions, indexing on tuples
   def hasher(self,index):
     return 1000*index[0]+index[1]
 
   def dehasher(self,hashed_index):
     return [int(math.floor(hashed_index/1000)),hashed_index%1000]
-
+  
+  #can be modified to return four or eight children
   def children(self,index):
     return [ (index[0]+1,index[1]), (index[0]-1,index[1]), (index[0],index[1]+1), (index[0],index[1]-1), (index[0]+1,index[1]+1), (index[0]-1,index[1]-1), (index[0]+1,index[1]-1), (index[0]-1,index[1]+1)  ]
   
@@ -279,7 +273,7 @@ class path:
   #this function is for convenience - change one line here 
   #to alter which hueristic we use in all future functions.
   def heur(self,p1,p2):
-    return self.manhattan(p1[0],p1[1],p2[0],p2[1])
+    return self.diagonal(p1[0],p1[1],p2[0],p2[1])
 
 
 

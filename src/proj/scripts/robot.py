@@ -9,7 +9,9 @@ import time
 from controller import *
 from path import *
 
-
+#pull path info and create path
 p1=path()
+#get path
 path=p1.get_path()
-cont=controller(path)
+#send path to controller to move jorge
+cont=controller(path,False)
