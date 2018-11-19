@@ -14,4 +14,4 @@ p1=path()
 #get path
 path=p1.get_path()
 #send path to controller to move jorge
-cont=controller(path,False)
+cont=controller(path,True)

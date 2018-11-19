@@ -119,7 +119,7 @@ class path:
     path = []
     start_time = time.time()
     i = 0
-    while i < 2:
+    while i < 3:
       #reverse index path
       rind_path=self.astar(seq[i],seq[i+1])
       curr=seq[i+1]
@@ -247,11 +247,6 @@ class path:
   #def shortest_path(self,rob_pos):
     #for elem in self.goals
 
-  """
-  This method finds a somewhat efficient path greedily;
-  It finds the closest point to the robot using astar, then the closest remaining point etc.
-  """
-  #def greedy_path(self,rob_pos):
 
   #heuristic #1 - taxicab distance between two points assuming no obstacles
   #represents being able to move in four major directions (no diagonals)

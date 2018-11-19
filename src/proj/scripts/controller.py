@@ -7,6 +7,7 @@ import time
 
 import marker
 
+from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import Header
@@ -17,7 +18,7 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 
 class controller:
   def __init__(self,path,verbose=True,tolerance_x=.24,tolerance_t=1):
-    self.dt=.05
+    self.dt=.025
     self.r=rospy.Rate(1/self.dt)
     self.path=path
     self.p=list(self.path)
@@ -29,6 +30,7 @@ class controller:
     #odom running and ready
 
     self.sub=rospy.Subscriber('/amcl_pose',PoseWithCovarianceStamped,self.handle_amcl_pose)
+    rospy.Subscriber('/noisy_base_scan', LaserScan, self.handle_scan)
     self.pub=rospy.Publisher('/cmd_vel',Twist,queue_size=15)
 
     temp = self.path.pop()
@@ -36,14 +38,32 @@ class controller:
     self.movement=Twist()
     self.tolerance_x=tolerance_x
     self.tolerance_t=tolerance_t
+    self.num_checks=5
+    self.blocked=[False for i in range(self.num_checks)]
     self.orientation=0
+    self.ctr=0
 
     self.follow_path()
+
   
   def handle_amcl_pose(self,data):
     self.position=data.pose.pose.position
     self.orientation=tf.transformations.euler_from_quaternion([0.,0.,data.pose.pose.orientation.z,data.pose.pose.orientation.w])[2]
     #print self.orientation
+
+  def handle_scan(self,laser):
+    cangle = laser.angle_min
+    inc = laser.angle_increment
+    
+    for val in laser.ranges:
+      x = val * math.cos(cangle)
+      y = val * math.sin(cangle)
+      
+      if((abs(y) == 0) and (x < .012)):
+        self.blocked[self.ctr]=True
+        break
+
+    self.ctr=(self.ctr+1)%self.num_checks 
 
   def follow_path(self):
     ctr=0
@@ -53,12 +73,20 @@ class controller:
       if self.verbose:
         print(ctr)
       for i in range(10):
-        curr_goal = self.path.pop()
+        try:
+          curr_goal = self.path.pop()
+        except IndexError:
+          break
       goal_theta = self.update_goal_theta(curr_goal)
       
       self.m.draw()
       self.r.sleep()
       self.driver(curr_goal,goal_theta)
+    self.movement.linear.x=0
+    self.movement.angular.z=0
+    self.pub.publish(self.movement)
+
+    rospy.loginfo("done navigating")
 
   def update_goal_theta(self,curr_goal):
     return math.atan2(curr_goal[1]-self.position.y,curr_goal[0]-self.position.x)
@@ -71,8 +99,8 @@ class controller:
 
     #define control parameters
     kpt=1
-    kit=0
-    kdt=0
+    kit=.2
+    kdt=.3
     kpx=1
     kix=0
     kdx=0
@@ -100,7 +128,7 @@ class controller:
 
       p=[self.position.x,self.position.y]
       #update errors and position
-      error_t = goal_theta - self.orientation
+      error_t = self.theta_range_confinement(goal_theta - self.orientation)
       error_x = self.dist(p,goal)
 
       #angular PID controller
@@ -114,7 +142,7 @@ class controller:
       self.movement.linear.x= kpx*error_x + kix*int_x + kdx*deriv_x
       
       
-      if abs(error_t) > math.pi/3:
+      if abs(error_t) > math.pi/4:
         self.movement.linear.x = 0
       self.movement.linear.x=min(max_linear,self.movement.linear.x)
       if self.movement.angular.z > 0:
@@ -122,6 +150,14 @@ class controller:
       else:
         self.movement.angular.z=max(-1*max_angular,self.movement.angular.z)
       
+      
+      if self.checker(self.blocked):
+        print "blocked."
+        self.movement.angular.z=0
+        self.movement.linear.x=-1
+        
+      
+
       self.pub.publish(self.movement)
       e0_t=error_t
       e0_x=error_x
@@ -137,6 +173,19 @@ class controller:
 
     return
 
+  #for difference in goal theta and current theta make sure the difference is between -pi and pi
+  def theta_range_confinement(self,theta):
+    if theta > math.pi:
+      return -2*math.pi + theta
+    elif theta < -1*math.pi:
+      return 2*math.pi - theta
+    return theta
+
+  def checker(self,bool_list):
+    for boo in bool_list:
+      if not boo:
+        return False
+    return True
 
   def dist_p(self,v1,v2):
     return math.sqrt(v1**2 + v2**2)

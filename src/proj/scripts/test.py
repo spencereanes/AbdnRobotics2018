@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-import numpy as np
+import math
 
 #this file is just for testing python stuff
 
-arr=np.array([1,2,3])
-print arr
-arr=np.insert(arr,0,[1,2])
-print arr
-print arr[2:]
+def theta_range_confinement(theta):
+  if theta > math.pi:
+    return -2*math.pi + theta
+  elif theta < -1*math.pi:
+    return 2*math.pi + theta
+  return theta
 
+print theta_range_confinement(-11*math.pi/6)

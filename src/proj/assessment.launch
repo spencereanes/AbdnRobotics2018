@@ -7,7 +7,7 @@
   <rosparam param="goal3">[4.5,-3.5]</rosparam>  <!-- much harder -->
   <rosparam param="goal4">[5.15,2]</rosparam> <!-- very hard -->
   <rosparam> 
-    max_linear: .35
+    max_linear: .5
     max_angular: 2
   </rosparam>
 
@@ -17,7 +17,7 @@
   <node name="dummy_localization" pkg="dummy_localization" type="dummy_localization.py"/> 
   <node name="add_gaussian_noise" pkg="add_gaussian_noise" type="addGaussianNoise.py"/>  
   <node name="real_robot_pose" pkg="proj" type="real_robot_pose.py" />   
-  <node name="robot" pkg="proj" type="robot.py" />
+  <!-- <node name="robot" pkg="proj" type="robot.py" /> -->
   <node name="rviz" pkg="rviz" type="rviz" />
 
   <node pkg="amcl" type="amcl" name="amcl" output="screen">  
