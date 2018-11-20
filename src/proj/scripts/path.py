@@ -39,21 +39,6 @@ class path:
     except:
       print "No precomputed occupancygrid"
 
-    """
-    for i in range(0,self.map_width,10):
-      for j in range(0,self.map_height,10):
-        if self.map.data[self.indexer(i,j)]==100:
-          p=self.deconvert([i,j])
-          #print p
-          self.m.add(p[0],p[1],0,1,0,'map')    
-
-    rospy.loginfo("done creating markers")
-
-    while not rospy.is_shutdown():
-      self.m.draw()
-      self.r.sleep()
-    """
-
     self.goals=[]
     self.get_goals()
     rospy.loginfo("Goals captured")
@@ -85,7 +70,7 @@ class path:
 
   #get goals from parameter server
   def get_goals(self):
-    for i in range(0,5):
+    for i in range(0,4):
       pname='/goal%s'%i
       self.goals.append(rospy.get_param(pname))
 
@@ -119,10 +104,16 @@ class path:
     path = []
     start_time = time.time()
     i = 0
-    while i < 3:
+    ctr = 0
+    while ctr < len(seq)-1:
       #reverse index path
-      rind_path=self.astar(seq[i],seq[i+1])
+      a_star_out=self.astar(seq[i],seq[i+1])
+      rind_path=a_star_out[1]
       curr=seq[i+1]
+      if not a_star_out[0]:
+        seq.pop(i+1)
+        #ctr=ctr+1
+        continue
 
       temp=[]
       on=self.convert_index(curr)
@@ -133,9 +124,7 @@ class path:
           temp.append(rind_path[on])
           on=rind_path[on]
       except:
-        seq.pop(i+1)
-        i = i - 1
-        continue #there was not path between those two goals
+        print "error in path building"
 
       #don't need to reverse, controller wants it in reverse order
       #temp.reverse()
@@ -143,6 +132,7 @@ class path:
 
       path.append(temp)
       i = i + 1
+      ctr = ctr + 1
 
     end_time=time.time()
     rospy.loginfo("\nPath Constructed")
@@ -165,6 +155,7 @@ class path:
     #end index
     eind=self.convert_index(end)
     
+    found_solution=False
     q=PriorityQueue()
     cost_so_far={}
     came_from={}
@@ -181,6 +172,7 @@ class path:
       #note: get returns only the index, not the priority
       if parent == eind:
         print "found solution, exiting"
+        found_solution=True
         break
       #print parent
 
@@ -201,7 +193,7 @@ class path:
 
     #print "came from: ", came_from[(334,234)]
     print "leaving astar"
-    return came_from
+    return [found_solution,came_from]
 
   #no longer using hashing functions, indexing on tuples
   def hasher(self,index):

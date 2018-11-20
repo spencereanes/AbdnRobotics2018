@@ -59,7 +59,7 @@ class controller:
       x = val * math.cos(cangle)
       y = val * math.sin(cangle)
       
-      if((abs(y) == 0) and (x < .012)):
+      if((abs(y) < 0.012) and (x < .012)):
         self.blocked[self.ctr]=True
         break
 
@@ -142,7 +142,7 @@ class controller:
       self.movement.linear.x= kpx*error_x + kix*int_x + kdx*deriv_x
       
       
-      if abs(error_t) > math.pi/4:
+      if abs(error_t) > math.pi/6:
         self.movement.linear.x = 0
       self.movement.linear.x=min(max_linear,self.movement.linear.x)
       if self.movement.angular.z > 0:
@@ -150,12 +150,12 @@ class controller:
       else:
         self.movement.angular.z=max(-1*max_angular,self.movement.angular.z)
       
-      
+      """
       if self.checker(self.blocked):
         print "blocked."
         self.movement.angular.z=0
         self.movement.linear.x=-1
-        
+      """  
       
 
       self.pub.publish(self.movement)

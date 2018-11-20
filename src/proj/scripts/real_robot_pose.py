@@ -31,14 +31,15 @@ class real_robot_pose:
 
     self.real_pose=Odometry()
     self.amcl_pose=PoseWithCovarianceStamped()
-    
+    ctr = 0
     while not rospy.is_shutdown():
       self.broadcast()
-      self.real_pose_marker()
-      self.amcl_pose_marker()
+      if ctr % 5 == 0:
+        self.real_pose_marker()
+        self.amcl_pose_marker()
       self.m.draw()
       self.r.sleep()
-      #self.m.clear()
+      ctr = ctr + 1
 
   def handle_real_pose(self, data):
     self.real_pose=data
