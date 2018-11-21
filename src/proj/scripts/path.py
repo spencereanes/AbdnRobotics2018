@@ -5,6 +5,7 @@ import roslib
 import math
 import numpy as np
 import time
+import itertools
 
 import marker
 from PriorityQueue import *
@@ -15,39 +16,50 @@ from std_msgs.msg import Header
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import PointStamped
 
-"""
-To Do:
-currently getting keyerror in Astar method
-figure out how to modify astar for jfs
-"""
 
 class path:
   def __init__(self):
 
     rospy.init_node('astar_path')
     self.r=rospy.Rate(10)
-    self.m=marker.Markers()
 
     self.arr=np.empty([2,2])
     self.get_map()
     self.map_width=self.map.info.width
     self.map_height=self.map.info.height
     self.res=self.map.info.resolution
-
-    try:
-      self.map.data=np.genfromtxt('/home/viki/catkin_ws/src/proj/scripts/inflated_data.csv',delimiter=',')
-    except:
-      print "No precomputed occupancygrid"
-
+    """
+    self.map.data=np.genfromtxt('/home/viki/catkin_ws/src/proj/scripts/inflated_data.csv',delimiter=',')
     self.goals=[]
     self.get_goals()
     rospy.loginfo("Goals captured")
     start=rospy.get_param("robot_start")
-    self.p=self.efficient_path(start[0:2],True)
+    self.p=self.shortest_path(start[0:2])
     #this 'flattens' the list of lists into a single list
     self.p = [item for sublist in self.p for item in sublist]
-    #self.draw_path()
-    
+    """
+    try:
+      self.p=np.genfromtxt('/home/viki/catkin_ws/src/proj/scripts/preplanned_path.csv',delimiter=',')
+      self.p=self.p.tolist()
+      print "using precomputed path"
+    except:
+      print "no precomputed path"
+      try:
+        self.map.data=np.genfromtxt('/home/viki/catkin_ws/src/proj/scripts/inflated_data.csv',delimiter=',')
+      except:
+        print "No precomputed occupancygrid"
+        return
+
+      self.goals=[]
+      self.get_goals()
+      rospy.loginfo("Goals captured")
+      start=rospy.get_param("robot_start")
+      self.p=self.shortest_path(start[0:2])
+      #this 'flattens' the list of lists into a single list
+      self.p = [item for sublist in self.p for item in sublist]
+      print "COMPUTED PATH: ", self.p[1:10]
+      np.savetxt("/home/viki/catkin_ws/src/proj/scripts/preplanned_path.csv",self.p,fmt='%.3f',delimiter=",")
+      
   def get_path(self):
     return self.p
     
@@ -70,7 +82,7 @@ class path:
 
   #get goals from parameter server
   def get_goals(self):
-    for i in range(0,4):
+    for i in range(0,3):
       pname='/goal%s'%i
       self.goals.append(rospy.get_param(pname))
 
@@ -81,6 +93,88 @@ class path:
 
   def deconvert(self,tup):
     return [round(tup[0]*self.res - 6,3), round(tup[1]*self.res-4.8,3)]
+
+  """
+  This function will find the sequence of shortest pathes between the goals.
+  This version is much less efficient as it will find the shortest path.
+  **This will need to calculate the cost between all nodes and find the 
+    smallest combination that reaches all nodes.**
+  """
+  def shortest_path(self,rob_pos):
+    seq = []
+    seq.append(rob_pos)
+    for goal in self.goals:
+      seq.append(goal)
+    
+    cost={}
+    rind_path={}
+    path_exists={}
+    indices = range(len(seq))
+
+    #determine paths between all nodes, and their costs
+    for i in range(len(seq)):
+      for j in range(i+1,len(seq)):
+        print "computing path between ", i, " and ", j
+        print seq[i], seq[j]
+        out = self.astar(seq[i],seq[j])
+        cost[(i,j)]=out[2]
+        rind_path[(i,j)]=out[1]
+        path_exists[(i,j)]=out[0]
+        if not path_exists[(i,j)]:
+          print "point ", seq[j], " is unreachable."
+          seq.pop(j)
+          indices.pop(j)
+    
+    nodes=list(indices)
+    nodes.pop(0)
+    print
+
+    #though this is O(n!) time, for a relatively small number of goals,
+    #it takes less time than actually computing the paths, and is much simpler
+    visit_order=list(itertools.permutations(nodes))
+    #this should be more than any possible combination ofpaths
+    min_cost = (self.map_width + self.map_height) * (len(indices)+1)+1
+    min_order = None
+    for order in visit_order:
+      print order
+      c = cost[0,order[0]]
+      for node in range(len(order)-2):
+        try:
+          c = c + cost[(order[node],order[node+1])]
+        except KeyError:
+          c = c + cost[(order[node+1],order[node])]
+      print "cost for ", order, " is ", c
+      if c < min_cost:
+        min_cost = c
+        min_order = order
+
+    print
+    print min_order, min_cost
+    min_list=[]
+    min_list.append(0)
+    for item in min_order:
+      min_list.append(item)
+
+    
+    path=[]
+    for i in range(len(min_list)-2):
+      temp=[]
+      on=self.convert_index(seq[min_list[i]])
+      temp.append(on)
+      
+      try:
+        while (rind_path[(i,i+1)][on]) is not None:
+          temp.append(rind_path[(i,i+1)][on])
+          on=rind_path[(i,i+1)][on]
+      except:
+        print "error in path building"
+
+      temp=map(self.deconvert,temp)
+      print "SHORTEST PATH temp: ", temp
+      path.append(temp)
+
+    path.reverse()
+    return path
 
   """
   This method estimates the shortest path not taking obstacles into account.
@@ -109,6 +203,7 @@ class path:
       #reverse index path
       a_star_out=self.astar(seq[i],seq[i+1])
       rind_path=a_star_out[1]
+      #print a_star_out[2]
       curr=seq[i+1]
       if not a_star_out[0]:
         seq.pop(i+1)
@@ -190,10 +285,15 @@ class path:
           q.put(child,new_cost)
           #print child
           came_from[child]=parent
+    
+    if found_solution:
+      c=cost_so_far[eind]
+    else:
+      c=-1
 
     #print "came from: ", came_from[(334,234)]
     print "leaving astar"
-    return [found_solution,came_from]
+    return [found_solution,came_from,c]
 
   #no longer using hashing functions, indexing on tuples
   def hasher(self,index):
@@ -228,16 +328,6 @@ class path:
       return False
     #print "returning true"
     return True
-    
-
-  """
-  This function will find the sequence of shortest pathes between the goals.
-  This version is much less efficient as it will find the shortest path.
-  **This will need to calculate the cost between all nodes and find the 
-    smallest combination that reaches all nodes.**
-  """
-  #def shortest_path(self,rob_pos):
-    #for elem in self.goals
 
 
   #heuristic #1 - taxicab distance between two points assuming no obstacles

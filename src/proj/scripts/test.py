@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import math
+from itertools import permutations
 
 #this file is just for testing python stuff
 
@@ -10,6 +11,7 @@ def theta_range_confinement(theta):
     return 2*math.pi + theta
   return theta
 
-l1 = [1,2,3]
-print l1.pop(1)
-print l1
+tup=(1,2,3)
+a=list(tup)
+print a.insert(0,0)
+

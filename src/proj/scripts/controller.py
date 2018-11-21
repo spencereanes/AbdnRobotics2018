@@ -21,6 +21,8 @@ class controller:
     self.dt=.025
     self.r=rospy.Rate(1/self.dt)
     self.path=path
+    print "defining controller"
+    print self.path
     self.p=list(self.path)
     self.m=marker.Markers('/path')
     self.verbose=verbose
@@ -30,7 +32,8 @@ class controller:
     #odom running and ready
 
     self.sub=rospy.Subscriber('/amcl_pose',PoseWithCovarianceStamped,self.handle_amcl_pose)
-    rospy.Subscriber('/noisy_base_scan', LaserScan, self.handle_scan)
+    #not currently using this data
+    #rospy.Subscriber('/noisy_base_scan', LaserScan, self.handle_scan)
     self.pub=rospy.Publisher('/cmd_vel',Twist,queue_size=15)
 
     temp = self.path.pop()
@@ -39,7 +42,7 @@ class controller:
     self.tolerance_x=tolerance_x
     self.tolerance_t=tolerance_t
     self.num_checks=5
-    self.blocked=[False for i in range(self.num_checks)]
+    #self.blocked=[False for i in range(self.num_checks)]
     self.orientation=0
     self.ctr=0
 
