@@ -57,7 +57,7 @@ class path:
       self.p=self.shortest_path(start[0:2])
       #this 'flattens' the list of lists into a single list
       self.p = [item for sublist in self.p for item in sublist]
-      print "COMPUTED PATH: ", self.p[1:10]
+      #print "COMPUTED PATH: ", self.p[1:10]
       np.savetxt("/home/viki/catkin_ws/src/proj/scripts/preplanned_path.csv",self.p,fmt='%.3f',delimiter=",")
       
   def get_path(self):
@@ -82,7 +82,7 @@ class path:
 
   #get goals from parameter server
   def get_goals(self):
-    for i in range(0,3):
+    for i in range(0,5):
       pname='/goal%s'%i
       self.goals.append(rospy.get_param(pname))
 
@@ -149,31 +149,43 @@ class path:
         min_order = order
 
     print
-    print min_order, min_cost
+    print "min order: ", min_order
+    print "min cost: ", min_cost
     min_list=[]
     min_list.append(0)
     for item in min_order:
       min_list.append(item)
+      #print seq[item]
 
     
     path=[]
-    for i in range(len(min_list)-2):
+    for i in range(len(min_list)-1):
       temp=[]
-      on=self.convert_index(seq[min_list[i]])
+      on=self.convert_index(seq[min_list[i+1]])
       temp.append(on)
       
+      #try:
+      print "rind_path ", i
       try:
-        while (rind_path[(i,i+1)][on]) is not None:
-          temp.append(rind_path[(i,i+1)][on])
-          on=rind_path[(i,i+1)][on]
-      except:
-        print "error in path building"
+        path_dict=rind_path[(min_list[i],min_list[i+1])]
+      except KeyError:
+        path_dict=rind_path[(min_list[i+1],min_list[i])]
+      if path_dict[on]==None:
+        on=self.convert_index(seq[min_list[i]])
+      while (path_dict[on]) is not None:
+        temp.append(path_dict[on])
+        on=path_dict[on]
+        #print on
+      #except:
+        #print "error in path building"
 
       temp=map(self.deconvert,temp)
-      print "SHORTEST PATH temp: ", temp
+      print temp[0]
+      #print "SHORTEST PATH temp: ", temp
       path.append(temp)
 
     path.reverse()
+    print "len path: ", len(path)
     return path
 
   """

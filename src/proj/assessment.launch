@@ -4,7 +4,7 @@
   <rosparam param="goal0">[-2,-2]</rosparam> <!-- easy -->
   <rosparam param="goal1">[2.5,-4.15]</rosparam> <!-- a bit harder -->
   <rosparam param="goal2">[-2.55,3.13]</rosparam> <!-- same as above -->
-  <rosparam param="goal3">[4.5,-3.5]</rosparam>  <!-- much harder -->
+  <rosparam param="goal3">[3.5,-3.5]</rosparam>  <!-- much harder, originall x=4.5 -->
   <rosparam param="goal4">[5.15,2]</rosparam> <!-- very hard -->
   <rosparam> 
     max_linear: .75

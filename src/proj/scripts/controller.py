@@ -21,8 +21,8 @@ class controller:
     self.dt=.025
     self.r=rospy.Rate(1/self.dt)
     self.path=path
-    print "defining controller"
-    print self.path
+    #print "defining controller"
+    #print self.path
     self.p=list(self.path)
     self.m=marker.Markers('/path')
     self.verbose=verbose

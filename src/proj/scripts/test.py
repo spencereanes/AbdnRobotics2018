@@ -4,14 +4,8 @@ from itertools import permutations
 
 #this file is just for testing python stuff
 
-def theta_range_confinement(theta):
-  if theta > math.pi:
-    return -2*math.pi + theta
-  elif theta < -1*math.pi:
-    return 2*math.pi + theta
-  return theta
+def convert_index(tup):
+  return ( int(math.ceil((tup[0]+6) / 0.012)), int(math.ceil((tup[1]+4.8) / 0.012))  )
 
-tup=(1,2,3)
-a=list(tup)
-print a.insert(0,0)
+print len(range(5))
 
