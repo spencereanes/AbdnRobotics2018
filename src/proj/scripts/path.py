@@ -28,16 +28,7 @@ class path:
     self.map_width=self.map.info.width
     self.map_height=self.map.info.height
     self.res=self.map.info.resolution
-    """
-    self.map.data=np.genfromtxt('/home/viki/catkin_ws/src/proj/scripts/inflated_data.csv',delimiter=',')
-    self.goals=[]
-    self.get_goals()
-    rospy.loginfo("Goals captured")
-    start=rospy.get_param("robot_start")
-    self.p=self.shortest_path(start[0:2])
-    #this 'flattens' the list of lists into a single list
-    self.p = [item for sublist in self.p for item in sublist]
-    """
+
     try:
       self.p=np.genfromtxt('/home/viki/catkin_ws/src/proj/scripts/preplanned_path.csv',delimiter=',')
       self.p=self.p.tolist()
@@ -48,7 +39,6 @@ class path:
         self.map.data=np.genfromtxt('/home/viki/catkin_ws/src/proj/scripts/inflated_data.csv',delimiter=',')
       except:
         print "No precomputed occupancygrid"
-        return
 
       self.goals=[]
       self.get_goals()

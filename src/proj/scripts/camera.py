@@ -7,7 +7,6 @@ import math
 from std_msgs.msg import Header
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
-from cv_bridge import CvBridge, CvBridgeError
 
 """
 http://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython
@@ -24,8 +23,6 @@ class camera:
     self.image_pub=rospy.Publisher('/camera/image_raw',Image,queue_size=15)
     self.depth_pub=rospy.Publisher('/camera/depth_raw',Image,queue_size=15)
     self.camera_info_pub=rospy.Publisher('/camera/camera_info',CameraInfo,queue_size=15)
-
-    self.bridge=CvBridge()
 
     rospy.wait_for_message('/depth',Image)
     self.depth_sub=rospy.Subscriber('/depth',Image,self.handle_depth)
