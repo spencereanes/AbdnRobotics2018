@@ -16,6 +16,10 @@ from std_msgs.msg import Header
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import PointStamped
 
+"""
+Hueristic info from:
+http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
+"""
 
 class path:
   def __init__(self):
@@ -72,7 +76,7 @@ class path:
 
   #get goals from parameter server
   def get_goals(self):
-    for i in range(0,5):
+    for i in range(0,4):
       pname='/goal%s'%i
       self.goals.append(rospy.get_param(pname))
 
@@ -153,8 +157,10 @@ class path:
       temp=[]
       on=self.convert_index(seq[min_list[i+1]])
       temp.append(on)
-      
-      #try:
+
+      backwards=False
+
+
       print "rind_path ", i
       try:
         path_dict=rind_path[(min_list[i],min_list[i+1])]
@@ -162,16 +168,16 @@ class path:
         path_dict=rind_path[(min_list[i+1],min_list[i])]
       if path_dict[on]==None:
         on=self.convert_index(seq[min_list[i]])
+        backwards=True
       while (path_dict[on]) is not None:
         temp.append(path_dict[on])
         on=path_dict[on]
-        #print on
-      #except:
-        #print "error in path building"
 
       temp=map(self.deconvert,temp)
-      print temp[0]
-      #print "SHORTEST PATH temp: ", temp
+      if backwards:
+        print "in backwards"
+        temp=temp[::-1]
+      print type(temp)
       path.append(temp)
 
     path.reverse()
