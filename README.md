@@ -9,7 +9,7 @@ All relevant files are contained within /src/proj, with python code in /src/proj
 See /scripts/real\_robot\_pose.py. This broadcasts 'where the robot thinks it is' using data from AMCL.  
 
 #### Task 2 - Path Planning  
-The path planner works in two stages. /scripts/obstacle\_inflation.py reads in the map data from the map server, iterates over it, and writes a new .csv file, inflated\_data.csv\ where all obstacles are inflated by 10 gride units, or .12 units in all directions.  
+The path planner works in two stages. /scripts/obstacle\_inflation.py reads in the map data from the map server, iterates over it, and writes a new .csv file, inflated\_data.csv where all obstacles are inflated by 10 gride units, or .12 units in all directions.  
 
 /scripts/path.py reads the data from inflated\_data.csv, and creates a path looking up grid squares against the data it reads. Precomputing the inflated obstacles speeds up navigation planning. The one downside to this method is that it marks the only passage way to goal4 as blocked. Once path.py has run once, it will write the comptued path to /scripts/preplanned\_path.csv. If this file it written it will not compute a new path but use the stored path.  
 
